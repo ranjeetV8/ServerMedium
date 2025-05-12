@@ -34,9 +34,35 @@ app.post('/api/v1/user/signup',async (c) => {
 })
 
 
-app.post('/api/v1/user/signin', (c) => {
-  return c.text('Hello signin here!')
-})
+app.post('/api/v1/user/signin',async (c) => {
+   const body = await c.req.json();
+  const prisma = new PrismaClient({
+    datasourceUrl : c.env.DATABASE_URL,
+  }).$extends(withAccelerate())
+ try {
+   const user = await prisma.user.findFirst({
+     where: {
+       username: body.username,
+       password: body.password,
+      
+     }
+   })
+
+   if (!user) {
+       c.status(411); //user unauthorized 
+       return c.json({
+        mesaage: "Incorrect credentails"
+       })
+   }
+     const jwt = await sign({
+      id: user.id
+     }, c.env.JWT_SECRET);
+   return c.text(jwt);
+ } catch (a) {
+   console.log(e);
+   c.status(411);
+   return c.text("Invalid");
+ }
 app.post("/api/v1/blog", (c) => {
   return c.text("Hello blog here post!");
 })
